@@ -1,6 +1,9 @@
+// src/components/Dashboard.js
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
+import EntryModal from "./EntryModal";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -11,11 +14,10 @@ function Dashboard() {
   const [name, setName] = useState("");
   const [phone, setMobile] = useState();
   const [due, setdue] = useState(0);
-
+  const [entryCustomer, setEntryCustomer] = useState(null);
 
   const token = localStorage.getItem("token");
 
-  // Fetch customers
   const fetchCustomers = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/customers`, {
@@ -27,12 +29,11 @@ function Dashboard() {
     }
   };
 
-  // Add new customer
   const addCustomer = async () => {
     try {
       const res = await axios.post(
         `${API_URL}/api/customers`,
-        { name, phone, due},
+        { name, phone, due },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCustomers([...customers, res.data]);
@@ -60,19 +61,14 @@ function Dashboard() {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold">Customer Dashboard</h2>
-        <button
-          onClick={() => setShowModal(true)}
-          className="btn btn-primary"
-        >
+        <button onClick={() => setShowModal(true)} className="btn btn-primary">
           + Add Customer
         </button>
       </div>
 
       {/* Summary */}
       <div className="alert alert-success mb-4">
-        <h5 className="mb-0">
-          Total Business Receivable: ₹{totalDue}
-        </h5>
+        <h5 className="mb-0">Total Business Receivable: ₹{totalDue}</h5>
       </div>
 
       {/* Search */}
@@ -86,18 +82,24 @@ function Dashboard() {
       {/* Customer Cards */}
       <div className="row">
         {filtered.map((c) => (
-          <div key={c.id} className="col-md-4 mb-3">
+          <div key={c._id} className="col-md-4 mb-3">
             <div className="card shadow-sm h-100">
               <div className="card-body">
                 <h5 className="card-title">{c.name}</h5>
                 <p className="text-danger fw-semibold">Due: ₹{c.due}</p>
+                <button
+                  className="btn btn-sm btn-outline-primary mt-2"
+                  onClick={() => setEntryCustomer(c)}
+                >
+                  + Entry
+                </button>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal */}
+      {/* Add Customer Modal */}
       {showModal && (
         <div className="modal show d-block" tabIndex="-1">
           <div className="modal-dialog">
@@ -111,24 +113,20 @@ function Dashboard() {
                 ></button>
               </div>
               <div className="modal-body">
-  {/* Customer Name */}
-  <input
-    placeholder="Name"
-    value={name}
-    onChange={(e) => setName(e.target.value)}
-    className="form-control mb-3"
-  />
-
-  {/* Mobile Number */}
-  <input
-    placeholder="Mobile Number"
-    type="tel"
-    value={phone}
-    onChange={(e) => setMobile(e.target.value)}
-    className="form-control mb-3"
-  />
-</div>
-
+                <input
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="form-control mb-3"
+                />
+                <input
+                  placeholder="Mobile Number"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setMobile(e.target.value)}
+                  className="form-control mb-3"
+                />
+              </div>
               <div className="modal-footer">
                 <button
                   onClick={() => setShowModal(false)}
@@ -136,16 +134,23 @@ function Dashboard() {
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={addCustomer}
-                  className="btn btn-primary"
-                >
+                <button onClick={addCustomer} className="btn btn-primary">
                   Save
                 </button>
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Entry Modal */}
+      {entryCustomer && (
+        <EntryModal
+          customer={entryCustomer}
+          onClose={() => setEntryCustomer(null)}
+          API_URL={API_URL}
+          token={token}
+        />
       )}
     </div>
   );
