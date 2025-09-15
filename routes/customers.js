@@ -63,13 +63,38 @@ router.post('/:id/entries', async (req, res) => {
 
 
 // Record payment
-router.post('/:id/payments', async (req,res)=>{
-  const {id} = req.params;
-  try{
-    const p = await Payment.create({customerId:id, amount:req.body.amount, method:req.body.method, ref:req.body.ref});
+router.post('/:id/payments', async (req, res) => {
+  const { id } = req.params;
+  const { amount, method, ref } = req.body;
+
+  try {
+    // 1. Create the payment entry
+    const p = await Payment.create({
+      customerId: id,
+      amount,
+      method,
+      ref,
+    });
+
+    // 2. Find the customer
+    const customer = await Customer.findById(id);
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    // 3. Subtract the payment amount from the due
+    customer.due = Math.max((customer.due || 0) - amount, 0); // Prevent negative due
+
+    // 4. Save updated customer
+    await customer.save();
+
     res.json(p);
-  }catch(e){ res.status(400).json({error:e.message}); }
+  } catch (e) {
+    console.error("Payment error:", e);
+    res.status(400).json({ error: e.message });
+  }
 });
+
 
 function computeEntryTotal(entry){
   const milkTotal = (entry.milk||[]).reduce((s,m)=> s + ((m.qty||0) * (m.ratePerLitre||0)), 0);

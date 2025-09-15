@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const EntryModal = ({ customer, onClose, API_URL, token }) => {
+const EntryModal = ({ customer, onClose, API_URL, token, onEntrySuccess }) => {
   const [milkQty, setMilkQty] = useState(""); // Quantity for milk
   const [milkType, setMilkType] = useState("cow"); // Default milk type
   const [extras, setExtras] = useState([{ name: "", rate: "" }]);
@@ -36,7 +36,7 @@ const EntryModal = ({ customer, onClose, API_URL, token }) => {
         }
       );
 
-      alert("Entry added successfully.");
+      onEntrySuccess();  // Refresh the dashboard after the entry is added
       onClose(); // Close modal after successful entry
     } catch (err) {
       console.error("Error submitting entry", err);
