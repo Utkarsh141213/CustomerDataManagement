@@ -4,21 +4,31 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const EntryModal = ({ customer, onClose, API_URL, token }) => {
-  const [milkQty, setMilkQty] = useState(""); // just quantity now
-  const [milkType, setMilkType] = useState("Cow"); // optional, can hardcode or skip
+  const [milkQty, setMilkQty] = useState(""); // Quantity for milk
+  const [milkType, setMilkType] = useState("cow"); // Default milk type
   const [extras, setExtras] = useState([{ name: "", rate: "" }]);
 
+  // Define rates for Cow and Buffalo
+  const milkRates = {
+    cow: 60,    // ₹60 per litre for Cow
+    buffalo: 75 // ₹75 per litre for Buffalo
+  };
+
+  // Submit the entry
   const submitEntry = async () => {
     try {
       const payload = {
         date: new Date(),
-        milk: milkQty ? [{ type: milkType, qty: Number(milkQty) }] : [],
+        milk: milkQty
+          ? [{ type: milkType, qty: Number(milkQty), ratePerLitre: milkRates[milkType] }] // Use dynamic rate
+          : [],
         extras: extras
           .filter((e) => e.name && e.rate)
           .map((e) => ({ name: e.name, rate: Number(e.rate) })),
       };
 
-      await axios.post(
+      // Calculate total from backend
+      const res = await axios.post(
         `${API_URL}/api/customers/${customer._id}/entries`,
         payload,
         {
@@ -27,7 +37,7 @@ const EntryModal = ({ customer, onClose, API_URL, token }) => {
       );
 
       alert("Entry added successfully.");
-      onClose();
+      onClose(); // Close modal after successful entry
     } catch (err) {
       console.error("Error submitting entry", err);
       alert("Failed to submit entry.");
@@ -57,7 +67,7 @@ const EntryModal = ({ customer, onClose, API_URL, token }) => {
               />
             </div>
 
-            {/* Optional: Select type (Cow/Buffalo) */}
+            {/* Milk Type (Cow/Buffalo) */}
             <div className="mb-4">
               <label className="form-label">Milk Type</label>
               <select
@@ -65,8 +75,8 @@ const EntryModal = ({ customer, onClose, API_URL, token }) => {
                 value={milkType}
                 onChange={(e) => setMilkType(e.target.value)}
               >
-                <option value="Cow">Cow</option>
-                <option value="Buffalo">Buffalo</option>
+                <option value="cow">Cow</option>
+                <option value="buffalo">Buffalo</option>
               </select>
             </div>
 
@@ -114,6 +124,7 @@ const EntryModal = ({ customer, onClose, API_URL, token }) => {
               </div>
             ))}
 
+            {/* Add new extra item */}
             <button
               className="btn btn-sm btn-outline-secondary"
               onClick={() => setExtras([...extras, { name: "", rate: "" }])}

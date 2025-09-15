@@ -39,16 +39,28 @@ router.get('/:id/summary', async (req,res)=>{
 });
 
 // Add daily entry
-router.post('/:id/entries', async (req,res)=>{
-  const {id} = req.params;
-  const payload = req.body; // expect {date, milk:[{type,qty,ratePerLitre}], extras:[{name,qty,rate}]}
+router.post('/:id/entries', async (req, res) => {
+  const { id } = req.params;
+  const payload = req.body;
+  console.log(payload);
   payload.customerId = id;
   payload.total = computeEntryTotal(payload);
-  try{
-    const e = await Entry.create(payload);
-    res.json(e);
-  }catch(e){ res.status(400).json({error:e.message}); }
+
+  try {
+    const e = await Entry.create(payload);  // Create the entry
+    var customer = await Customer.findById(id); // Find the customer
+
+    if (customer) {
+      customer.due += e.total; // Use `e.total` instead of `entry.total`
+      await customer.save(); // Save the updated customer
+    }
+
+    res.json({ entry: e, customer: customer });  // Return the created entry and updated customer
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
+
 
 // Record payment
 router.post('/:id/payments', async (req,res)=>{
@@ -61,7 +73,7 @@ router.post('/:id/payments', async (req,res)=>{
 
 function computeEntryTotal(entry){
   const milkTotal = (entry.milk||[]).reduce((s,m)=> s + ((m.qty||0) * (m.ratePerLitre||0)), 0);
-  const extrasTotal = (entry.extras||[]).reduce((s,x)=> s + ((x.qty||0) * (x.rate||0)), 0);
+  const extrasTotal = (entry.extras||[]).reduce((s,x)=> s + ((x.rate||0)), 0);
   return Math.round((milkTotal + extrasTotal) * 100)/100;
 }
 
