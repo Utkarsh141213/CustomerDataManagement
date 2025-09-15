@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import EntryModal from "./EntryModal";
+import SummaryModal from "./SummaryModal";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -15,6 +16,7 @@ function Dashboard() {
   const [phone, setMobile] = useState();
   const [due, setdue] = useState(0);
   const [entryCustomer, setEntryCustomer] = useState(null);
+  const [summaryCustomer, setSummaryCustomer] = useState(null);
 
   const token = localStorage.getItem("token");
 
@@ -93,6 +95,12 @@ function Dashboard() {
                 >
                   + Entry
                 </button>
+                <button
+                  className="btn btn-sm btn-outline-info mt-2 ms-2"
+                  onClick={() => setSummaryCustomer(c)} // Open Summary Modal
+                >
+                  View Summary
+                </button>
               </div>
             </div>
           </div>
@@ -148,6 +156,16 @@ function Dashboard() {
         <EntryModal
           customer={entryCustomer}
           onClose={() => setEntryCustomer(null)}
+          API_URL={API_URL}
+          token={token}
+        />
+      )}
+
+      {/* Customer Summary Modal */}
+      {summaryCustomer && (
+        <SummaryModal
+          customer={summaryCustomer}
+          onClose={() => setSummaryCustomer(null)}
           API_URL={API_URL}
           token={token}
         />
